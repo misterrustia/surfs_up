@@ -86,12 +86,39 @@ def temp_monthly():
     return jsonify(temps=temps)
 
 
-if __name__ == '__main__':
-    app.debug = True
-    app.run(host='0.0.0.0',port = 5000)
-
-
 #cal date 1 yr from last date in DB
 #query primary stayion for all temp obs from prvs year
 #numpy ravel into 1 d array then convert into list
 #temps = a list of the 1 d aray numpy usese ravel to create from the results 
+
+
+@app.route("/api/v1.0/temp/<start>")
+@app.route("/api/v1.0/temp/<start>/<end>")
+
+
+def stats(start=None, end=None):
+    sel=[func.min(Measurement.tobs),func.avg(Measurement.tobs),func.max(Measurement.tobs)]
+
+    if not end:
+        results = session.query(*sel).\
+            filter(Measurement.date <= start).all()
+        temps = list(np.ravel(results))
+        return jsonify(temps)
+
+
+    results = session.query(*sel).\
+            filter(Measurement.date >=start).\
+                filter(Measurement.date <= end).all()
+    temps = list(np.ravel(results))
+    return jsonify(temps=temps)
+
+
+
+# sel is a list of querys using fnc on total observations data in SQLA
+# pay attention to the asterix as allows results to have multiple objects come from sel and into results
+
+
+if __name__ == '__main__':
+    app.debug = True
+    app.run(host='0.0.0.0',port = 5000)
+
